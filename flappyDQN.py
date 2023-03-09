@@ -61,6 +61,41 @@ class DQNAgent:
         if np.random.random() > self.epsilon:
             return np.argmax(self.model.predit(state))
         return 1 if np.random.random() < self.jump_prob else 0
+    
+    def train(self):
+        for i in  range(self.episodes):
+            state = self.env.reset()
+            # we want to reshape our state in manner that the neural network could understand.
+            state = np.reshape(state, [1, self.state_space])
+            done = False
+            score = 0
+            #decay the epsilon
+            self.epsilon = self.epsilon*self.epsilon_decay if self.epsilon*self.epsilon_decay > self.epsilon_min else self.epsilon_min
+
+            while not done:
+                self.env.render()
+                action = self.act(state)
+                next_state, reward, done, info = self.env.step(action)
+
+                #reshape next state as we reshaped the state above
+                nex_state = np.reshape(nex_state, [1, self.state_space])
+                # because in this env (flappy bird) the more you go the more you get score 
+                score += 1
+
+                # we want to punish the agent every time it dies
+                if done:
+                    reward -= 100
+                
+                self.memory.append((state, action, reward, next_state, done))
+                state = next_state
+
+                if done:
+                    print("Episode: {}\nScore: {}\nEpsilon: {:.2}".format(i, score, self.epsilon))
+                    #save model
+
+                # The function that will train the neural network
+                self.learn()
+                 
 
 
 if __name__ == '__main__':
