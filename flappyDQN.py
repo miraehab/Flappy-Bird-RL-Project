@@ -55,6 +55,13 @@ class DQNAgent:
         self.jump_prob = 0.01
         self.model = NeuralNetwork(input_shape=(self.state_space,), output_shape=self.action_scpace)
 
+    def act(self, state):
+        
+        #if we want to predict our action based on our model
+        if np.random.random() > self.epsilon:
+            return np.argmax(self.model.predit(state))
+        return 1 if np.random.random() < self.jump_prob else 0
+
 
 if __name__ == '__main__':
     agent = DQNAgent()
