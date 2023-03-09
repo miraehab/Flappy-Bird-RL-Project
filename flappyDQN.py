@@ -6,6 +6,22 @@ from keras.layers import Input, Dense
 from keras.models import load_model, save_model, Sequential
 from keras.optimizers import RMSprop
 
+# Neural Network for the Agent
+def NeuralNetwork(input_shape, output_shape):
+    model = Sequential()
+    #we will not use Conv layer as here we use a ram environment not a pixelated environment
+    model.add(Dense(512, input_shape=input_shape, activation='relu',  kernel_initializer='he_uniform'))
+    model.add(Dense(256, activation='relu', kernel_initializer='he_uniform'))
+    model.add(Dense(64, activation='relu', kernel_initializer='he_uniform'))
+    # activation = 'linear' -> so we can squish our computation that we did previously into one of the possible output variables
+    # so the output variable will be an action (0-> nothing, 1-> jump)
+    model.add(Dense(output_shape, activation='linear', kernel_initializer='he_uniform'))
+
+    model.compile(loss='mse', optimizer=RMSprop(lr=0.0001, rho=0.95, epsilon=0.01), metrics=['accuracy'])
+    model.summary()
+
+    return model
+
 # Brain of Agent | BluePrint of Agent
 class DQNAgent:
     def __init__(self):
@@ -37,8 +53,9 @@ class DQNAgent:
 
         self.train_start = 1000
         self.jump_prob = 0.01
-        #self.model = NeuralNet
+        self.model = NeuralNetwork(input_shape=(self.state_space,), output_shape=self.action_scpace)
 
 
-
+if __name__ == '__main__':
+    agent = DQNAgent()
 
