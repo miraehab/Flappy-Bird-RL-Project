@@ -59,8 +59,53 @@ class DQNAgent:
         
         #if we want to predict our action based on our model
         if np.random.random() > self.epsilon:
-            return np.argmax(self.model.predit(state))
+            return np.argmax(self.model.predict(state))
         return 1 if np.random.random() < self.jump_prob else 0
+    
+    def learn(self):
+        #warm up rounds
+        # we don't want to learn yet we still need more data
+        if len(self.memory) < self.train_start:
+            return
+        
+        # take a batch of our memory
+        minibatch = random.sample(self.memory, min(len(self.memory), self.batch_num))
+
+        #Variables to store mini-batch info
+        #create our state and next state
+        state = np.zeros((self.batch_num, self.state_space))
+        next_state = np.zeros((self.batch_num, self.state_space))
+
+        action, reward, done = [], [], []
+
+        # to create the mini batch that we took from memory
+        for i in range(self.batch_num):
+            state[i] = minibatch[i][0]
+            action.append(minibatch[i][1])
+            reward.append(minibatch[i][2])
+            next_state = minibatch[i][3]
+            done.append(minibatch[i][4])
+
+        #Using supervised Learning to predict the target (so we have a value that we could compare to)
+        target = self.model.predict(state)
+        target_next = self.model.predict(state)
+
+        # Q-Learning Part
+        #building the true values as we can 
+        for i in range(self.batch_num):
+            if done[i]:
+                target[i][action[i]] = reward[i]
+            else:
+                target[i][action[i]] = reward[i] + self.gamma * (np.amax(target_next[i]))
+
+
+        # train the model using the predited data
+        self.model.fit(state, target, batch_size=self.batch_num, verbose=0)
+
+
+        
+
+        
     
     def train(self):
         for i in  range(self.episodes):
@@ -78,7 +123,7 @@ class DQNAgent:
                 next_state, reward, done, info = self.env.step(action)
 
                 #reshape next state as we reshaped the state above
-                nex_state = np.reshape(nex_state, [1, self.state_space])
+                next_state = np.reshape(next_state, [1, self.state_space])
                 # because in this env (flappy bird) the more you go the more you get score 
                 score += 1
 
@@ -92,6 +137,9 @@ class DQNAgent:
                 if done:
                     print("Episode: {}\nScore: {}\nEpsilon: {:.2}".format(i, score, self.epsilon))
                     #save model
+                    if score > 1000:
+                        self.model.save("flappy_agent_1.h5")
+                        return 
 
                 # The function that will train the neural network
                 self.learn()
@@ -100,4 +148,19 @@ class DQNAgent:
 
 if __name__ == '__main__':
     agent = DQNAgent()
+    agent.train()
 
+    """
+    To Load the model:
+    self.model = load_model("flappy_agent_1.h5")
+    state = np.reshape(state, [1, self.state_space])
+    action = self.model.predict(state)
+            ____ step_____
+    state = np.reshape(next_state, [1, self.state_space])
+    # to visualize the score only not to train
+    score += 1
+
+    if done:
+    break
+
+    """
